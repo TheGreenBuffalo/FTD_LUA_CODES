@@ -197,7 +197,7 @@ function Update(I)
 
          snpx = snpx / stepd;
          
-         snp[1] = 0;
+         snp[1] = snpx;
          
          -- Weighted Summation of Last 6 Positions (y)
          snpy = TGTD[snap][2].Position[2] * 3;
@@ -216,7 +216,7 @@ function Update(I)
 
          snpy = snpy / stepd;
          
-         snp[2] = 0;
+         snp[2] = snpy;
          
       -- Weighted Summation of Last 6 Positions (z)
          snpz = TGTD[snap][2].Position[3] * 3;
@@ -235,7 +235,7 @@ function Update(I)
 
          snpz = snpz / stepd;
          
-         snp[3] = 0;
+         snp[3] = snpz;
          
          TGTS[4] = snp;
       end
@@ -320,13 +320,13 @@ function Update(I)
             -- Determine temporal error
                Lvel = math.cos(theta1) * mVel;
                T1 = CLRng / Lvel;
-               TH = T1 * 2;
+               TH = math.max(T1*2,T1+5);
                TL = math.max(T1-10,0);
 
                frak = 1/6;
                frak2 = 1/24;
 
-               for att=0,20,1 do -- solve for intercept multiple times to get something close (hopefully)
+               for att=0,15,1 do -- solve for intercept multiple times to get something close (hopefully)
             
                -- Get Multiples of T1 to make math quicker
                   T12 = T1*T1*0.5;
@@ -346,9 +346,9 @@ function Update(I)
                   FYdispJ = TGTS[3][2]*T13*frak;
                   FZdispJ = TGTS[3][3]*T13*frak;
             
-                  --FXdispS = TGTS[4][1]*T14*frak2;               -- Quartic Corrector
-                  --FYdispS = TGTS[4][2]*T14*frak2;
-                  --FZdispS = TGTS[4][3]*T14*frak2;
+                  FXdispS = TGTS[4][1]*T14*frak2;               -- Quartic Corrector
+                  FYdispS = TGTS[4][2]*T14*frak2;
+                  FZdispS = TGTS[4][3]*T14*frak2;
 
                   FXRng = CXRng + FXdispV + FXdispA + FXdispJ;  -- Future dX
                   FYRng = CYRng + FYdispV + FYdispA + FYdispJ;  -- Future dY
@@ -374,10 +374,12 @@ function Update(I)
                   T2E = T1-T2+tim;
 
                -- BisectMethod
-                  if T2E > 0 then
-                     TH = T2;
+                  if T2E ~= T2E then
+                     TH = T1;
+                  elseif T2E > 0 then
+                     TH = T1;
                   else
-                     TL = T2;
+                     TL = T1;
                   end
                   T1 = TH+TL;
                   T1 = T1*0.5;
@@ -403,9 +405,9 @@ function Update(I)
                TYdispJ = TGTS[3][2]*TT3*frak;
                TZdispJ = TGTS[3][3]*TT3*frak;
             
-               --TXdispS = TGTS[4][1]*TT4*frak2;               -- Quartic Corrector
-               --TYdispS = TGTS[4][2]*TT4*frak2;
-               --TZdispS = TGTS[4][3]*TT4*frak2;
+               TXdispS = TGTS[4][1]*TT4*frak2;               -- Quartic Corrector
+               TYdispS = TGTS[4][2]*TT4*frak2;
+               TZdispS = TGTS[4][3]*TT4*frak2;
 
                TXRng = CXRng + TXdispV + TXdispA + TXdispJ;  -- Target dX
                TYRng = CYRng + TYdispV + TYdispA + TYdispJ;  -- Target dY
@@ -438,7 +440,7 @@ function Update(I)
                end
                
             -- Fire Turret
-               if AimErr[1] < 0.01 and  AimErr[2] < 0.01 and AimErr[3] < 0.01 then
+               if AimErr[1] < 0.005 and  AimErr[2] < 0.005 and AimErr[3] < 0.005 then
                   I:FireWeapon(idx,0);
                end
             end
